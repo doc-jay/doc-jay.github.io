@@ -93,3 +93,11 @@ div.shadow-sm:has(button[type=submit]) h1.text-2xl.text-immich-primary::after {
     font-family: 'Product Sans', 'Roboto' !important;
     font-weight: 400;
 }
+
+img[alt="Immich logo"] {
+    content: url("https://raw.githubusercontent.com/doc-jay/doc-jay.github.io/master/Cicada-3301-1024x538-4255615599.jpg");
+    width: 96px; /* Matches h-24 (6rem = 96px) */
+    height: auto; /* Adapts to image’s 1024x538 ratio */
+    margin: 0 auto; /* Centers it */
+    display: block;
+}
