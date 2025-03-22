@@ -1,0 +1,282 @@
+VM Configs:
+#This VM was imported from SYCESXI on 7/28/24
+agent: 1
+bios: ovmf
+boot: order=sata1
+cores: 4
+cpu: host
+efidisk0: VM_AREA:vm-100-disk-0,efitype=4m,pre-enrolled-keys=1,size=1M
+memory: 2048
+meta: creation-qemu=9.0.0,ctime=1722218531
+name: CERBERUS
+net0: virtio=00:50:56:ab:7a:72,bridge=vmbr0,mtu=9000,queues=4
+numa: 0
+onboot: 1
+ostype: l26
+sata0: none,media=cdrom
+sata1: VM_AREA:vm-100-disk-1,size=16G
+scsihw: virtio-scsi-pci
+smbios1: uuid=422b4fc1-d6b8-8935-be5d-8884c89ea193
+sockets: 1
+startup: order=4
+vmgenid: 7eacae33-f4ee-4b31-ad8b-a54d73ce2457
+#This VM was imported from SYCESXI on 7/28/24
+agent: 1
+bios: seabios
+boot: order=scsi0
+cores: 4
+cpu: host
+hotplug: disk,network
+memory: 4096
+meta: creation-qemu=9.0.0,ctime=1722220238
+name: PI-HOLE
+net0: virtio=00:0c:29:9a:3c:01,bridge=vmbr0,mtu=9000,queues=4
+onboot: 1
+ostype: l26
+scsi0: VM_AREA:vm-101-disk-0,size=40G
+scsihw: virtio-scsi-pci
+smbios1: uuid=564da063-22d7-e933-310e-21d87a9a3c01
+sockets: 1
+startup: order=2
+vmgenid: eb3b1535-92b7-417c-a64a-f8738c768325
+#This VM was imported from SYCESXI on 7/29/24
+agent: 1
+bios: ovmf
+boot: order=sata1
+cores: 1
+cpu: host
+efidisk0: VM_AREA:vm-102-disk-0,size=1M
+memory: 8192
+meta: creation-qemu=9.0.0,ctime=1722260768
+name: CICADA3301
+net0: virtio=00:0c:29:31:8e:e1,bridge=vmbr0,mtu=9000,queues=4
+onboot: 1
+ostype: l26
+sata0: none,media=cdrom
+sata1: VM_AREA:vm-102-disk-1,size=20G
+scsihw: pvscsi
+smbios1: uuid=564d3096-5fbf-a0eb-1b48-ffcddf318ee1
+sockets: 4
+startup: order=3,up=60
+tags: rocky
+vmgenid: 7681eb92-c8e4-434b-bb0d-026b54eac743
+agent: 1
+bios: ovmf
+boot: order=sata1;sata2
+cores: 12
+cpu: host
+efidisk0: VM_AREA:vm-103-disk-0,size=1M
+hostpci0: 0000:07:00
+memory: 65536
+meta: creation-qemu=9.0.0,ctime=1722482259
+name: APOLLO
+net0: virtio=00:0c:29:44:25:ca,bridge=vmbr0,mtu=9000,queues=8
+numa: 0
+onboot: 1
+ostype: l26
+sata0: none,media=cdrom
+sata1: VM_AREA:vm-103-disk-1,size=250G
+sata2: VM_AREA:vm-103-disk-2,size=15G
+scsihw: pvscsi
+smbios1: uuid=564dd58d-ee3b-9fca-1e4d-4e25af4425ca
+sockets: 1
+startup: order=5,up=60
+tags: rocky
+vmgenid: f8b0ad0c-fdc3-4a3d-b0e9-960da60570bd
+agent: 1
+bios: seabios
+boot: order=sata0;ide0
+cores: 8
+cpu: host
+hostpci0: 0000:02:00,pcie=1
+ide0: none,media=cdrom
+machine: q35
+memory: 32768
+meta: creation-qemu=9.0.0,ctime=1722557591
+name: OMNIOS-panic
+net0: virtio=BC:24:11:DA:82:39,bridge=vmbr0,firewall=1
+numa: 1
+ostype: solaris
+sata0: VM_AREA:vm-104-disk-0,backup=0,size=32G
+scsihw: virtio-scsi-single
+smbios1: uuid=564d283f-a5fe-e07f-15d6-27d11d06c22c
+sockets: 1
+vmgenid: 1c3d250e-15a0-40da-b765-6075b5d3c891
+bios: seabios
+boot: order=ide0;scsi0
+cores: 4
+cpu: host
+ide0: none,media=cdrom
+memory: 3072
+meta: creation-qemu=9.0.2,ctime=1725208310
+name: HERMES
+net0: vmxnet3=00:0c:29:16:f2:2f,bridge=vmbr0
+ostype: l26
+scsi0: VM_AREA:vm-105-disk-0,size=30G
+scsihw: pvscsi
+smbios1: uuid=564dbfac-569b-70cc-bbf7-b93f7416f22f
+sockets: 1
+vmgenid: 53e3a57c-badb-46b6-97fd-6d290053cbe4
+bios: seabios
+boot: order=scsi0;scsi1
+cores: 1
+cpu: host
+memory: 4096
+meta: creation-qemu=9.0.2,ctime=1725209486
+name: SYCMK
+net0: virtio=00:50:56:ab:57:eb,bridge=vmbr0
+ostype: other
+scsi0: VM_AREA:vm-106-disk-0,size=4G
+scsi1: VM_AREA:vm-106-disk-1,size=100G
+scsihw: lsi
+smbios1: uuid=422b5b55-1946-e14f-6bb4-02c3b38f7359
+sockets: 2
+vmgenid: 8772f0fc-932e-4edc-9361-453ce5168cac
+acpi: 1
+agent: 1
+balloon: 0
+boot:  
+cores: 8
+cpu: host
+hostpci0: 0000:02:00.0,pcie=1,rombar=0
+hostpci1: 0000:83:00.0,pcie=1
+ide0: none,media=cdrom
+ide1: VM_AREA:vm-107-disk-0,size=32G,ssd=1
+kvm: 1
+localtime: 1
+machine: q35
+memory: 32768
+meta: creation-qemu=9.0.0,ctime=1722557591
+name: OMNIOS
+numa: 0
+onboot: 1
+ostype: solaris
+scsihw: virtio-scsi-single
+smbios1: uuid=0e9313c3-fae8-48e8-85c0-4b91fee8e571
+sockets: 1
+startup: order=1
+tablet: 1
+vmgenid: 4cc665d0-d87b-49a6-b92f-1f6836b2156c
+
+Storage Config:
+dir: local
+	path /var/lib/vz
+	content backup,vztmpl,iso
+
+lvmthin: local-lvm
+	thinpool data
+	vgname pve
+	content images,rootdir
+
+zfspool: VM_AREA
+	pool VM_AREA
+	content rootdir,images
+	mountpoint /VM_AREA
+	nodes sycpve
+	sparse 0
+
+zfspool: SYCNAS
+	disable
+	pool SYCNAS
+	content images,rootdir
+	mountpoint /SYCNAS
+	nodes sycpve
+	sparse 0
+
+nfs: ISO
+	disable
+	export /NAPPTANK/NAPPNAS/pub/working
+	path /mnt/pve/ISO
+	server 172.25.47.111
+	content iso
+	options vers=4
+	prune-backups keep-all=1
+
+nfs: VM_Backups
+	export /NAPPTANKBU/VM_BU_AREA
+	path /mnt/pve/VM_Backups
+	server 172.25.47.111
+	content backup
+	options vers=4.2
+	prune-backups keep-all=1
+
+dir: USB_NVME-backup
+	path /mnt/pve/USB_NVME-backup
+	content images,iso,rootdir,vztmpl,snippets,backup
+	is_mountpoint 1
+	nodes sycpve
+
+
+Disk Layout:
+NAME               MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sdk                  8:160  0 894.3G  0 disk 
+├─sdk1               8:161  0 894.2G  0 part 
+└─sdk9               8:169  0     8M  0 part 
+sdl                  8:176  0 894.3G  0 disk 
+├─sdl1               8:177  0 894.2G  0 part 
+└─sdl9               8:185  0     8M  0 part 
+sdm                  8:192  0   1.8T  0 disk 
+└─sdm1               8:193  0   1.8T  0 part /mnt/pve/USB_NVME-backup
+sdn                  8:208  1  57.8G  0 disk 
+└─sdn1               8:209  1  57.8G  0 part 
+sdo                  8:224  1     0B  0 disk 
+sr0                 11:0    1  1024M  0 rom  
+zd0                230:0    0    40G  0 disk 
+├─zd0p1            230:1    0  38.3G  0 part 
+├─zd0p2            230:2    0     1K  0 part 
+└─zd0p5            230:5    0   1.7G  0 part 
+zd16               230:16   0   100G  0 disk 
+├─zd16p1           230:17   0     4G  0 part 
+└─zd16p2           230:18   0    96G  0 part 
+zd32               230:32   0     1M  0 disk 
+zd48               230:48   0    20G  0 disk 
+├─zd48p1           230:49   0   600M  0 part 
+├─zd48p2           230:50   0     1G  0 part 
+└─zd48p3           230:51   0  18.4G  0 part 
+zd64               230:64   0    30G  0 disk 
+├─zd64p1           230:65   0    28G  0 part 
+├─zd64p2           230:66   0     1K  0 part 
+└─zd64p5           230:69   0     2G  0 part 
+zd80               230:80   0    32G  0 disk 
+├─zd80p1           230:81   0   256M  0 part 
+├─zd80p2           230:82   0  31.7G  0 part 
+└─zd80p9           230:89   0     8M  0 part 
+zd96               230:96   0    16G  0 disk 
+├─zd96p1           230:97   0   600M  0 part 
+├─zd96p2           230:98   0     1G  0 part 
+└─zd96p3           230:99   0  14.4G  0 part 
+zd112              230:112  0   250G  0 disk 
+├─zd112p1          230:113  0   600M  0 part 
+├─zd112p2          230:114  0     1G  0 part 
+└─zd112p3          230:115  0 248.4G  0 part 
+zd128              230:128  0    32G  0 disk 
+├─zd128p1          230:129  0   256M  0 part 
+├─zd128p2          230:130  0  31.7G  0 part 
+└─zd128p9          230:137  0     8M  0 part 
+zd144              230:144  0     4G  0 disk 
+└─zd144p1          230:145  0     4G  0 part 
+zd160              230:160  0     1M  0 disk 
+zd176              230:176  0    15G  0 disk 
+└─zd176p1          230:177  0    15G  0 part 
+zd192              230:192  0     1M  0 disk 
+nvme2n1            259:0    0 110.3G  0 disk 
+├─nvme2n1p1        259:1    0 110.3G  0 part 
+└─nvme2n1p9        259:2    0     8M  0 part 
+nvme0n1            259:3    0 110.3G  0 disk 
+├─nvme0n1p1        259:4    0 110.3G  0 part 
+└─nvme0n1p9        259:5    0     8M  0 part 
+nvme1n1            259:6    0 110.3G  0 disk 
+├─nvme1n1p1        259:7    0  1007K  0 part 
+├─nvme1n1p2        259:8    0     1G  0 part 
+└─nvme1n1p3        259:9    0 109.3G  0 part 
+  ├─pve-swap       252:0    0     8G  0 lvm  [SWAP]
+  ├─pve-root       252:1    0  37.3G  0 lvm  /
+  ├─pve-data_tmeta 252:2    0     1G  0 lvm  
+  │ └─pve-data     252:4    0  48.3G  0 lvm  
+  └─pve-data_tdata 252:3    0  48.3G  0 lvm  
+    └─pve-data     252:4    0  48.3G  0 lvm  
+Node                  Generic               SN                   Model                                    Namespace Usage                      Format           FW Rev  
+--------------------- --------------------- -------------------- ---------------------------------------- --------- -------------------------- ---------------- --------
+/dev/nvme2n1          /dev/ng2n1            BTOC14120W3X118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
+/dev/nvme1n1          /dev/ng1n1            BTOC14120WMN118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
+/dev/nvme0n1          /dev/ng0n1            BTOC14120VXP118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
