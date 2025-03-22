@@ -307,3 +307,21 @@ config:
 	    ata-SAMSUNG_MZ7L3960HCJR-00A07_S662NE0T511750  ONLINE       0     0     0
 
 errors: No known data errors
+
+ZFS List:
+NAME                    USED  AVAIL  REFER  MOUNTPOINT
+SYCNAS                 32.4M   107G    96K  /SYCNAS
+VM_AREA                 548G   313G    96K  /VM_AREA
+VM_AREA/vm-100-disk-0     3M   313G    92K  -
+VM_AREA/vm-100-disk-1  16.3G   319G  10.2G  -
+VM_AREA/vm-101-disk-0  40.6G   335G  18.0G  -
+VM_AREA/vm-102-disk-0     3M   313G    76K  -
+VM_AREA/vm-102-disk-1  20.3G   321G  12.2G  -
+VM_AREA/vm-103-disk-0     3M   313G    80K  -
+VM_AREA/vm-103-disk-1   254G   368G   199G  -
+VM_AREA/vm-103-disk-2  15.2G   322G  5.89G  -
+VM_AREA/vm-104-disk-0  32.5G   325G  20.4G  -
+VM_AREA/vm-105-disk-0  30.5G   334G  9.04G  -
+VM_AREA/vm-106-disk-0  4.06G   316G  1.10G  -
+VM_AREA/vm-106-disk-1   102G   413G   952M  -
+VM_AREA/vm-107-disk-0  32.5G   320G  25.2G  -
