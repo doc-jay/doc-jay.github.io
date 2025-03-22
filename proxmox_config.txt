@@ -280,3 +280,30 @@ Node                  Generic               SN                   Model          
 /dev/nvme2n1          /dev/ng2n1            BTOC14120W3X118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
 /dev/nvme1n1          /dev/ng1n1            BTOC14120WMN118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
 /dev/nvme0n1          /dev/ng0n1            BTOC14120VXP118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
+
+Zpool Status:
+  pool: SYCNAS
+ state: ONLINE
+  scan: scrub repaired 0B in 00:00:00 with 0 errors on Sun Mar  9 00:24:01 2025
+config:
+
+	NAME                                             STATE     READ WRITE CKSUM
+	SYCNAS                                           ONLINE       0     0     0
+	  mirror-0                                       ONLINE       0     0     0
+	    nvme-INTEL_SSDPEK1A118GA_BTOC14120W3X118B    ONLINE       0     0     0
+	    nvme-INTEL_SSDPEK1A118GA_BTOC14120VXP118B_1  ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: VM_AREA
+ state: ONLINE
+  scan: scrub repaired 0B in 00:12:56 with 0 errors on Sun Mar  9 00:36:57 2025
+config:
+
+	NAME                                               STATE     READ WRITE CKSUM
+	VM_AREA                                            ONLINE       0     0     0
+	  mirror-0                                         ONLINE       0     0     0
+	    ata-SAMSUNG_MZ7L3960HCJR-00A07_S662NE0R400020  ONLINE       0     0     0
+	    ata-SAMSUNG_MZ7L3960HCJR-00A07_S662NE0T511750  ONLINE       0     0     0
+
+errors: No known data errors
