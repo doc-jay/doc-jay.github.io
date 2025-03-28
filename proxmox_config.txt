@@ -1,4 +1,19 @@
-VM Configs:
+Proxmox Configuration Dump - Fri Mar 28 01:07:31 PM CDT 2025
+=====================================
+
+### KVM VMs (qm list)
+      VMID NAME                 STATUS     MEM(MB)    BOOTDISK(GB) PID       
+       100 CERBERUS             running    2048              16.00 2269529   
+       101 PI-HOLE              running    4096              40.00 2272498   
+       102 CICADA3301           running    8192              20.00 2274385   
+       103 APOLLO               running    65536            250.00 2294792   
+       104 PULSEX               running    4096              40.00 230883    
+       105 HERMES               stopped    3072              30.00 0         
+       107 OMNIOS               running    32768              0.00 2298070   
+
+### LXC Containers (pct list)
+
+### VM Configurations (/etc/pve/qemu-server/)
 #This VM was imported from SYCESXI on 7/28/24
 agent: 1
 bios: ovmf
@@ -57,7 +72,7 @@ sata1: VM_AREA:vm-102-disk-1,size=20G
 scsihw: pvscsi
 smbios1: uuid=564d3096-5fbf-a0eb-1b48-ffcddf318ee1
 sockets: 4
-startup: order=3,up=60
+startup: order=3,up=180
 tags: rocky
 vmgenid: 7681eb92-c8e4-434b-bb0d-026b54eac743
 agent: 1
@@ -80,28 +95,29 @@ sata2: VM_AREA:vm-103-disk-2,size=15G
 scsihw: pvscsi
 smbios1: uuid=564dd58d-ee3b-9fca-1e4d-4e25af4425ca
 sockets: 1
-startup: order=5,up=60
+startup: order=5,up=120
 tags: rocky
 vmgenid: f8b0ad0c-fdc3-4a3d-b0e9-960da60570bd
 agent: 1
+balloon: 0
 bios: seabios
-boot: order=sata0;ide0
-cores: 8
+boot: order=scsi0
+cores: 2
 cpu: host
-hostpci0: 0000:02:00,pcie=1
-ide0: none,media=cdrom
+ide2: ISO:iso/Rocky-9.5-x86_64-minimal.iso,media=cdrom,size=1851712K
 machine: q35
-memory: 32768
-meta: creation-qemu=9.0.0,ctime=1722557591
-name: OMNIOS-panic
-net0: virtio=BC:24:11:DA:82:39,bridge=vmbr0,firewall=1
-numa: 1
-ostype: solaris
-sata0: VM_AREA:vm-104-disk-0,backup=0,size=32G
-scsihw: virtio-scsi-single
-smbios1: uuid=564d283f-a5fe-e07f-15d6-27d11d06c22c
+memory: 4096
+meta: creation-qemu=9.2.0,ctime=1742711515
+name: PULSEX
+net0: virtio=BC:24:11:DF:04:22,bridge=vmbr0
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: VM_AREA:vm-104-disk-0,size=40G
+scsihw: virtio-scsi-pci
+smbios1: uuid=e2812988-a110-4d74-9eee-cbc3f9211667
 sockets: 1
-vmgenid: 1c3d250e-15a0-40da-b765-6075b5d3c891
+vmgenid: d4b2649d-1e84-4327-9867-386072682bdf
 bios: seabios
 boot: order=ide0;scsi0
 cores: 4
@@ -117,21 +133,6 @@ scsihw: pvscsi
 smbios1: uuid=564dbfac-569b-70cc-bbf7-b93f7416f22f
 sockets: 1
 vmgenid: 53e3a57c-badb-46b6-97fd-6d290053cbe4
-bios: seabios
-boot: order=scsi0;scsi1
-cores: 1
-cpu: host
-memory: 4096
-meta: creation-qemu=9.0.2,ctime=1725209486
-name: SYCMK
-net0: virtio=00:50:56:ab:57:eb,bridge=vmbr0
-ostype: other
-scsi0: VM_AREA:vm-106-disk-0,size=4G
-scsi1: VM_AREA:vm-106-disk-1,size=100G
-scsihw: lsi
-smbios1: uuid=422b5b55-1946-e14f-6bb4-02c3b38f7359
-sockets: 2
-vmgenid: 8772f0fc-932e-4edc-9361-453ce5168cac
 acpi: 1
 agent: 1
 balloon: 0
@@ -141,7 +142,7 @@ cpu: host
 hostpci0: 0000:02:00.0,pcie=1,rombar=0
 hostpci1: 0000:83:00.0,pcie=1
 ide0: none,media=cdrom
-ide1: VM_AREA:vm-107-disk-0,size=32G,ssd=1
+ide1: local-lvm:vm-107-disk-0,size=32G,ssd=1
 kvm: 1
 localtime: 1
 machine: q35
@@ -158,10 +159,23 @@ startup: order=1
 tablet: 1
 vmgenid: 4cc665d0-d87b-49a6-b92f-1f6836b2156c
 
-Storage Config:
+### LXC Configurations (/etc/pve/lxc/)
+No LXC containers found
+
+### Storage Configuration (pvesm status)
+Name                   Type     Status           Total            Used       Available        %
+ISO                     nfs     active     26262994944     17067493376      9195501568   64.99%
+SYCNAS              zfspool   disabled               0               0               0      N/A
+USB_NVME-backup         dir     active      1921724676       640118128      1183914488   33.31%
+VM_AREA             zfspool     active       902299648       437940376       464359272   48.54%
+VM_Backups              nfs     active      3394862080       179004416      3215857664    5.27%
+local                   dir     active        38202760        11362132        24867792   29.74%
+local-lvm           lvmthin     active        50679808        33555100        17124707   66.21%
+
+### Storage Definitions (/etc/pve/storage.cfg)
 dir: local
 	path /var/lib/vz
-	content backup,vztmpl,iso
+	content vztmpl,iso,backup
 
 lvmthin: local-lvm
 	thinpool data
@@ -170,7 +184,7 @@ lvmthin: local-lvm
 
 zfspool: VM_AREA
 	pool VM_AREA
-	content rootdir,images
+	content images,rootdir
 	mountpoint /VM_AREA
 	nodes sycpve
 	sparse 0
@@ -178,13 +192,12 @@ zfspool: VM_AREA
 zfspool: SYCNAS
 	disable
 	pool SYCNAS
-	content images,rootdir
+	content rootdir,images
 	mountpoint /SYCNAS
 	nodes sycpve
 	sparse 0
 
 nfs: ISO
-	disable
 	export /NAPPTANK/NAPPNAS/pub/working
 	path /mnt/pve/ISO
 	server 172.25.47.111
@@ -202,86 +215,87 @@ nfs: VM_Backups
 
 dir: USB_NVME-backup
 	path /mnt/pve/USB_NVME-backup
-	content images,iso,rootdir,vztmpl,snippets,backup
+	content iso,images,rootdir,vztmpl,backup,snippets
 	is_mountpoint 1
 	nodes sycpve
 
 
-Disk Layout:
-NAME               MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-sdk                  8:160  0 894.3G  0 disk 
-├─sdk1               8:161  0 894.2G  0 part 
-└─sdk9               8:169  0     8M  0 part 
-sdl                  8:176  0 894.3G  0 disk 
-├─sdl1               8:177  0 894.2G  0 part 
-└─sdl9               8:185  0     8M  0 part 
-sdm                  8:192  0   1.8T  0 disk 
-└─sdm1               8:193  0   1.8T  0 part /mnt/pve/USB_NVME-backup
-sdn                  8:208  1  57.8G  0 disk 
-└─sdn1               8:209  1  57.8G  0 part 
-sdo                  8:224  1     0B  0 disk 
-sr0                 11:0    1  1024M  0 rom  
-zd0                230:0    0    40G  0 disk 
-├─zd0p1            230:1    0  38.3G  0 part 
-├─zd0p2            230:2    0     1K  0 part 
-└─zd0p5            230:5    0   1.7G  0 part 
-zd16               230:16   0   100G  0 disk 
-├─zd16p1           230:17   0     4G  0 part 
-└─zd16p2           230:18   0    96G  0 part 
-zd32               230:32   0     1M  0 disk 
-zd48               230:48   0    20G  0 disk 
-├─zd48p1           230:49   0   600M  0 part 
-├─zd48p2           230:50   0     1G  0 part 
-└─zd48p3           230:51   0  18.4G  0 part 
-zd64               230:64   0    30G  0 disk 
-├─zd64p1           230:65   0    28G  0 part 
-├─zd64p2           230:66   0     1K  0 part 
-└─zd64p5           230:69   0     2G  0 part 
-zd80               230:80   0    32G  0 disk 
-├─zd80p1           230:81   0   256M  0 part 
-├─zd80p2           230:82   0  31.7G  0 part 
-└─zd80p9           230:89   0     8M  0 part 
-zd96               230:96   0    16G  0 disk 
-├─zd96p1           230:97   0   600M  0 part 
-├─zd96p2           230:98   0     1G  0 part 
-└─zd96p3           230:99   0  14.4G  0 part 
-zd112              230:112  0   250G  0 disk 
-├─zd112p1          230:113  0   600M  0 part 
-├─zd112p2          230:114  0     1G  0 part 
-└─zd112p3          230:115  0 248.4G  0 part 
-zd128              230:128  0    32G  0 disk 
-├─zd128p1          230:129  0   256M  0 part 
-├─zd128p2          230:130  0  31.7G  0 part 
-└─zd128p9          230:137  0     8M  0 part 
-zd144              230:144  0     4G  0 disk 
-└─zd144p1          230:145  0     4G  0 part 
-zd160              230:160  0     1M  0 disk 
-zd176              230:176  0    15G  0 disk 
-└─zd176p1          230:177  0    15G  0 part 
-zd192              230:192  0     1M  0 disk 
-nvme2n1            259:0    0 110.3G  0 disk 
-├─nvme2n1p1        259:1    0 110.3G  0 part 
-└─nvme2n1p9        259:2    0     8M  0 part 
-nvme0n1            259:3    0 110.3G  0 disk 
-├─nvme0n1p1        259:4    0 110.3G  0 part 
-└─nvme0n1p9        259:5    0     8M  0 part 
-nvme1n1            259:6    0 110.3G  0 disk 
-├─nvme1n1p1        259:7    0  1007K  0 part 
-├─nvme1n1p2        259:8    0     1G  0 part 
-└─nvme1n1p3        259:9    0 109.3G  0 part 
-  ├─pve-swap       252:0    0     8G  0 lvm  [SWAP]
-  ├─pve-root       252:1    0  37.3G  0 lvm  /
-  ├─pve-data_tmeta 252:2    0     1G  0 lvm  
-  │ └─pve-data     252:4    0  48.3G  0 lvm  
-  └─pve-data_tdata 252:3    0  48.3G  0 lvm  
-    └─pve-data     252:4    0  48.3G  0 lvm  
+### Disk and Partition Layout (lsblk)
+NAME                         MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+sdk                            8:160  0 894.3G  0 disk 
+├─sdk1                         8:161  0 894.2G  0 part 
+└─sdk9                         8:169  0     8M  0 part 
+sdl                            8:176  0 894.3G  0 disk 
+├─sdl1                         8:177  0 894.2G  0 part 
+└─sdl9                         8:185  0     8M  0 part 
+sdm                            8:192  1  57.8G  0 disk 
+└─sdm1                         8:193  1  57.8G  0 part 
+sdn                            8:208  1     0B  0 disk 
+sdo                            8:224  0   1.8T  0 disk 
+└─sdo1                         8:225  0   1.8T  0 part /mnt/pve/USB_NVME-backup
+sr0                           11:0    1  1024M  0 rom  
+zd0                          230:0    0    40G  0 disk 
+├─zd0p1                      230:1    0  38.3G  0 part 
+├─zd0p2                      230:2    0     1K  0 part 
+└─zd0p5                      230:5    0   1.7G  0 part 
+zd16                         230:16   0    40G  0 disk 
+├─zd16p1                     230:17   0     1G  0 part 
+└─zd16p2                     230:18   0    39G  0 part 
+zd32                         230:32   0     1M  0 disk 
+zd48                         230:48   0    20G  0 disk 
+├─zd48p1                     230:49   0   600M  0 part 
+├─zd48p2                     230:50   0     1G  0 part 
+└─zd48p3                     230:51   0  18.4G  0 part 
+zd64                         230:64   0    30G  0 disk 
+├─zd64p1                     230:65   0    28G  0 part 
+├─zd64p2                     230:66   0     1K  0 part 
+└─zd64p5                     230:69   0     2G  0 part 
+zd96                         230:96   0    16G  0 disk 
+├─zd96p1                     230:97   0   600M  0 part 
+├─zd96p2                     230:98   0     1G  0 part 
+└─zd96p3                     230:99   0  14.4G  0 part 
+zd112                        230:112  0   250G  0 disk 
+├─zd112p1                    230:113  0   600M  0 part 
+├─zd112p2                    230:114  0     1G  0 part 
+└─zd112p3                    230:115  0 248.4G  0 part 
+zd160                        230:160  0     1M  0 disk 
+zd176                        230:176  0    15G  0 disk 
+└─zd176p1                    230:177  0    15G  0 part 
+zd192                        230:192  0     1M  0 disk 
+nvme1n1                      259:0    0 110.3G  0 disk 
+├─nvme1n1p1                  259:1    0 110.3G  0 part 
+└─nvme1n1p9                  259:2    0     8M  0 part 
+nvme0n1                      259:3    0 110.3G  0 disk 
+├─nvme0n1p1                  259:4    0 110.3G  0 part 
+└─nvme0n1p9                  259:5    0     8M  0 part 
+nvme2n1                      259:6    0 110.3G  0 disk 
+├─nvme2n1p1                  259:7    0  1007K  0 part 
+├─nvme2n1p2                  259:8    0     1G  0 part 
+└─nvme2n1p3                  259:9    0 109.3G  0 part 
+  ├─pve-swap                 252:0    0     8G  0 lvm  [SWAP]
+  ├─pve-root                 252:1    0  37.3G  0 lvm  /
+  ├─pve-data_tmeta           252:2    0     1G  0 lvm  
+  │ └─pve-data-tpool         252:4    0  48.3G  0 lvm  
+  │   ├─pve-data             252:5    0  48.3G  1 lvm  
+  │   └─pve-vm--107--disk--0 252:6    0    32G  0 lvm  
+  └─pve-data_tdata           252:3    0  48.3G  0 lvm  
+    └─pve-data-tpool         252:4    0  48.3G  0 lvm  
+      ├─pve-data             252:5    0  48.3G  1 lvm  
+      └─pve-vm--107--disk--0 252:6    0    32G  0 lvm  
+
+### NVMe Devices (nvme list)
 Node                  Generic               SN                   Model                                    Namespace Usage                      Format           FW Rev  
 --------------------- --------------------- -------------------- ---------------------------------------- --------- -------------------------- ---------------- --------
-/dev/nvme2n1          /dev/ng2n1            BTOC14120W3X118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
-/dev/nvme1n1          /dev/ng1n1            BTOC14120WMN118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
-/dev/nvme0n1          /dev/ng0n1            BTOC14120VXP118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
+/dev/nvme2n1          /dev/ng2n1            BTOC14120WMN118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
+/dev/nvme1n1          /dev/ng1n1            BTOC14120VXP118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
+/dev/nvme0n1          /dev/ng0n1            BTOC14120W3X118B     INTEL SSDPEK1A118GA                      1         118.41  GB / 118.41  GB    512   B +  0 B   U5110550
 
-Zpool Status:
+### ZFS Pools (zpool list)
+NAME      SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
+SYCNAS    110G  32.4M   110G        -         -     3%     0%  1.00x    ONLINE  -
+VM_AREA   888G   261G   627G        -         -    41%    29%  1.00x    ONLINE  -
+
+### ZFS Pool Status (zpool status)
   pool: SYCNAS
  state: ONLINE
   scan: scrub repaired 0B in 00:00:00 with 0 errors on Sun Mar  9 00:24:01 2025
@@ -308,20 +322,237 @@ config:
 
 errors: No known data errors
 
-ZFS List:
+### ZFS Datasets (zfs list -t all)
 NAME                    USED  AVAIL  REFER  MOUNTPOINT
 SYCNAS                 32.4M   107G    96K  /SYCNAS
-VM_AREA                 548G   313G    96K  /VM_AREA
-VM_AREA/vm-100-disk-0     3M   313G    92K  -
-VM_AREA/vm-100-disk-1  16.3G   319G  10.2G  -
-VM_AREA/vm-101-disk-0  40.6G   335G  18.0G  -
-VM_AREA/vm-102-disk-0     3M   313G    76K  -
-VM_AREA/vm-102-disk-1  20.3G   321G  12.2G  -
-VM_AREA/vm-103-disk-0     3M   313G    80K  -
-VM_AREA/vm-103-disk-1   254G   368G   199G  -
-VM_AREA/vm-103-disk-2  15.2G   322G  5.89G  -
-VM_AREA/vm-104-disk-0  32.5G   325G  20.4G  -
-VM_AREA/vm-105-disk-0  30.5G   334G  9.04G  -
-VM_AREA/vm-106-disk-0  4.06G   316G  1.10G  -
-VM_AREA/vm-106-disk-1   102G   413G   952M  -
-VM_AREA/vm-107-disk-0  32.5G   320G  25.2G  -
+VM_AREA                 418G   443G    96K  /VM_AREA
+VM_AREA/vm-100-disk-0     3M   443G    96K  -
+VM_AREA/vm-100-disk-1  16.3G   449G  10.2G  -
+VM_AREA/vm-101-disk-0  40.6G   465G  18.1G  -
+VM_AREA/vm-102-disk-0     3M   443G    76K  -
+VM_AREA/vm-102-disk-1  20.3G   451G  12.1G  -
+VM_AREA/vm-103-disk-0     3M   443G    76K  -
+VM_AREA/vm-103-disk-1   254G   495G   202G  -
+VM_AREA/vm-103-disk-2  15.2G   452G  5.89G  -
+VM_AREA/vm-104-disk-0  40.6G   481G  2.91G  -
+VM_AREA/vm-105-disk-0  30.5G   464G  9.04G  -
+
+### LVM Physical Volumes (pvs)
+  PV             VG  Fmt  Attr PSize   PFree 
+  /dev/nvme2n1p3 pve lvm2 a--  109.27g 13.62g
+
+### LVM Volume Groups (vgs)
+  VG  #PV #LV #SN Attr   VSize   VFree 
+  pve   1   4   0 wz--n- 109.27g 13.62g
+
+### LVM Logical Volumes (lvs)
+  LV            VG  Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  data          pve twi-aotz--  48.33g             66.21  2.40                            
+  root          pve -wi-ao---- <37.32g                                                    
+  swap          pve -wi-ao----   8.00g                                                    
+  vm-107-disk-0 pve Vwi-aotz--  32.00g data        100.00                                 
+
+### PCI Devices (lspci)
+00:00.0 Host bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DMI2 (rev 01)
+00:01.0 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 1 (rev 01)
+00:02.0 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 2 (rev 01)
+00:02.1 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 2 (rev 01)
+00:02.2 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 2 (rev 01)
+00:02.3 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 2 (rev 01)
+00:03.0 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 3 (rev 01)
+00:03.2 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 3 (rev 01)
+00:05.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Map/VTd_Misc/System Management (rev 01)
+00:05.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D IIO Hot Plug (rev 01)
+00:05.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D IIO RAS/Control Status/Global Errors (rev 01)
+00:05.4 PIC: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D I/O APIC (rev 01)
+00:11.0 Unassigned class [ff00]: Intel Corporation C610/X99 series chipset SPSR (rev 05)
+00:11.4 SATA controller: Intel Corporation C610/X99 series chipset sSATA Controller [AHCI mode] (rev 05)
+00:14.0 USB controller: Intel Corporation C610/X99 series chipset USB xHCI Host Controller (rev 05)
+00:16.0 Communication controller: Intel Corporation C610/X99 series chipset MEI Controller #1 (rev 05)
+00:16.1 Communication controller: Intel Corporation C610/X99 series chipset MEI Controller #2 (rev 05)
+00:1a.0 USB controller: Intel Corporation C610/X99 series chipset USB Enhanced Host Controller #2 (rev 05)
+00:1c.0 PCI bridge: Intel Corporation C610/X99 series chipset PCI Express Root Port #1 (rev d5)
+00:1c.7 PCI bridge: Intel Corporation C610/X99 series chipset PCI Express Root Port #8 (rev d5)
+00:1d.0 USB controller: Intel Corporation C610/X99 series chipset USB Enhanced Host Controller #1 (rev 05)
+00:1f.0 ISA bridge: Intel Corporation C610/X99 series chipset LPC Controller (rev 05)
+00:1f.2 SATA controller: Intel Corporation C610/X99 series chipset 6-Port SATA Controller [AHCI mode] (rev 05)
+01:00.0 Ethernet controller: Broadcom Inc. and subsidiaries NetXtreme II BCM57800 1/10 Gigabit Ethernet (rev 10)
+01:00.1 Ethernet controller: Broadcom Inc. and subsidiaries NetXtreme II BCM57800 1/10 Gigabit Ethernet (rev 10)
+01:00.2 Ethernet controller: Broadcom Inc. and subsidiaries NetXtreme II BCM57800 1/10 Gigabit Ethernet (rev 10)
+01:00.3 Ethernet controller: Broadcom Inc. and subsidiaries NetXtreme II BCM57800 1/10 Gigabit Ethernet (rev 10)
+02:00.0 Serial Attached SCSI controller: Broadcom / LSI SAS3008 PCI-Express Fusion-MPT SAS-3 (rev 02)
+04:00.0 Non-Volatile memory controller: Intel Corporation Optane NVME SSD P1600X Series
+05:00.0 Non-Volatile memory controller: Intel Corporation Optane NVME SSD P1600X Series
+06:00.0 Non-Volatile memory controller: Intel Corporation Optane NVME SSD P1600X Series
+07:00.0 VGA compatible controller: NVIDIA Corporation GA104GL [RTX A4000] (rev a1)
+07:00.1 Audio device: NVIDIA Corporation GA104 High Definition Audio Controller (rev a1)
+09:00.0 PCI bridge: Renesas Technology Corp. SH7758 PCIe Switch [PS]
+0a:00.0 PCI bridge: Renesas Technology Corp. SH7758 PCIe Switch [PS]
+0b:00.0 PCI bridge: Renesas Technology Corp. SH7758 PCIe-PCI Bridge [PPB]
+0c:00.0 VGA compatible controller: Matrox Electronics Systems Ltd. G200eR2 (rev 01)
+7f:08.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0 (rev 01)
+7f:08.2 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0 (rev 01)
+7f:08.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0 (rev 01)
+7f:09.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 1 (rev 01)
+7f:09.2 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 1 (rev 01)
+7f:09.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 1 (rev 01)
+7f:0b.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link 0/1 (rev 01)
+7f:0b.1 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link 0/1 (rev 01)
+7f:0b.2 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link 0/1 (rev 01)
+7f:0b.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link Debug (rev 01)
+7f:0c.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0c.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0d.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0d.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0d.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0d.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0d.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0d.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:0f.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+7f:10.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R2PCIe Agent (rev 01)
+7f:10.1 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R2PCIe Agent (rev 01)
+7f:10.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Ubox (rev 01)
+7f:10.6 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Ubox (rev 01)
+7f:10.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Ubox (rev 01)
+7f:12.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 0 (rev 01)
+7f:12.1 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 0 (rev 01)
+7f:12.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 0 Debug (rev 01)
+7f:12.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 1 (rev 01)
+7f:12.5 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 1 (rev 01)
+7f:12.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 1 Debug (rev 01)
+7f:13.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Target Address/Thermal/RAS (rev 01)
+7f:13.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Target Address/Thermal/RAS (rev 01)
+7f:13.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel Target Address Decoder (rev 01)
+7f:13.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel Target Address Decoder (rev 01)
+7f:13.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Broadcast (rev 01)
+7f:13.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Global Broadcast (rev 01)
+7f:14.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 0 Thermal Control (rev 01)
+7f:14.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 1 Thermal Control (rev 01)
+7f:14.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 0 Error (rev 01)
+7f:14.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 1 Error (rev 01)
+7f:14.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+7f:14.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+7f:14.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+7f:14.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+7f:16.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Target Address/Thermal/RAS (rev 01)
+7f:16.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Target Address/Thermal/RAS (rev 01)
+7f:16.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Channel Target Address Decoder (rev 01)
+7f:16.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Channel Target Address Decoder (rev 01)
+7f:16.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Broadcast (rev 01)
+7f:16.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Global Broadcast (rev 01)
+7f:17.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 0 Thermal Control (rev 01)
+7f:17.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 1 Thermal Control (rev 01)
+7f:17.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 0 Error (rev 01)
+7f:17.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 1 Error (rev 01)
+7f:17.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+7f:17.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+7f:17.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+7f:17.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+7f:1e.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+7f:1e.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+7f:1e.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+7f:1e.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+7f:1e.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+7f:1f.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+7f:1f.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+80:01.0 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 1 (rev 01)
+80:02.0 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 2 (rev 01)
+80:03.0 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 3 (rev 01)
+80:03.2 PCI bridge: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D PCI Express Root Port 3 (rev 01)
+80:05.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Map/VTd_Misc/System Management (rev 01)
+80:05.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D IIO Hot Plug (rev 01)
+80:05.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D IIO RAS/Control Status/Global Errors (rev 01)
+80:05.4 PIC: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D I/O APIC (rev 01)
+82:00.0 USB controller: ASMedia Technology Inc. ASM2142/ASM3142 USB 3.1 Host Controller
+83:00.0 Ethernet controller: Mellanox Technologies MT27710 Family [ConnectX-4 Lx]
+83:00.1 Ethernet controller: Mellanox Technologies MT27710 Family [ConnectX-4 Lx]
+84:00.0 Serial Attached SCSI controller: Broadcom / LSI SAS3408 Fusion-MPT Tri-Mode I/O Controller Chip (IOC) (rev 01)
+ff:08.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0 (rev 01)
+ff:08.2 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0 (rev 01)
+ff:08.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0 (rev 01)
+ff:09.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 1 (rev 01)
+ff:09.2 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 1 (rev 01)
+ff:09.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 1 (rev 01)
+ff:0b.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link 0/1 (rev 01)
+ff:0b.1 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link 0/1 (rev 01)
+ff:0b.2 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link 0/1 (rev 01)
+ff:0b.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R3 QPI Link Debug (rev 01)
+ff:0c.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0c.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0d.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0d.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0d.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0d.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0d.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0d.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:0f.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Caching Agent (rev 01)
+ff:10.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R2PCIe Agent (rev 01)
+ff:10.1 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D R2PCIe Agent (rev 01)
+ff:10.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Ubox (rev 01)
+ff:10.6 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Ubox (rev 01)
+ff:10.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Ubox (rev 01)
+ff:12.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 0 (rev 01)
+ff:12.1 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 0 (rev 01)
+ff:12.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 0 Debug (rev 01)
+ff:12.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 1 (rev 01)
+ff:12.5 Performance counters: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 1 (rev 01)
+ff:12.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Home Agent 1 Debug (rev 01)
+ff:13.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Target Address/Thermal/RAS (rev 01)
+ff:13.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Target Address/Thermal/RAS (rev 01)
+ff:13.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel Target Address Decoder (rev 01)
+ff:13.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel Target Address Decoder (rev 01)
+ff:13.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Broadcast (rev 01)
+ff:13.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Global Broadcast (rev 01)
+ff:14.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 0 Thermal Control (rev 01)
+ff:14.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 1 Thermal Control (rev 01)
+ff:14.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 0 Error (rev 01)
+ff:14.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 0 - Channel 1 Error (rev 01)
+ff:14.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+ff:14.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+ff:14.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+ff:14.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 0/1 Interface (rev 01)
+ff:16.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Target Address/Thermal/RAS (rev 01)
+ff:16.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Target Address/Thermal/RAS (rev 01)
+ff:16.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Channel Target Address Decoder (rev 01)
+ff:16.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Channel Target Address Decoder (rev 01)
+ff:16.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Broadcast (rev 01)
+ff:16.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Global Broadcast (rev 01)
+ff:17.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 0 Thermal Control (rev 01)
+ff:17.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 1 Thermal Control (rev 01)
+ff:17.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 0 Error (rev 01)
+ff:17.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Memory Controller 1 - Channel 1 Error (rev 01)
+ff:17.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+ff:17.5 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+ff:17.6 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+ff:17.7 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DDRIO Channel 2/3 Interface (rev 01)
+ff:1e.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+ff:1e.1 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+ff:1e.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+ff:1e.3 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+ff:1e.4 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+ff:1f.0 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
+ff:1f.2 System peripheral: Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Power Control Unit (rev 01)
