@@ -25,7 +25,7 @@ NTFY_TOKEN = "tk_50vh37nty27lm1wgbgu65kzgln69q"
 
 # Backup configuration
 SOURCE_DIR = "/mnt/docker_storage"  # Where your Docker persistent data lives
-BACKUP_ROOT = "/mnt/nas/docker"     # Where backups will be stored (e.g., NAS)
+BACKUP_ROOT = "/mnt/docker_bu"     # Where backups will be stored (e.g., NAS)
 DATE = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 BACKUP_DIR = os.path.join(BACKUP_ROOT, f"docker_backup_{DATE}")
 RETENTION_DAYS = 7  # Number of days to keep backups
