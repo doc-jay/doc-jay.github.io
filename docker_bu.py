@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Docker Backup Script
-# Version 1.0 - 2025-03-29
+# Version 1.1 - 2025-03-29
 # Initial version with container pausing, ntfy notifications, and real-time console output
 
 import os
@@ -20,7 +20,7 @@ logging.basicConfig(
 
 # Ntfy settings
 NTFY_URL = "http://172.25.47.113:3030"
-NTFY_TOPIC = "grokbu"
+NTFY_TOPIC = "dockerbu"
 NTFY_TOKEN = "tk_50vh37nty27lm1wgbgu65kzgln69q"
 
 # Backup configuration
@@ -40,11 +40,12 @@ def send_notification(message, title="Docker Backup"):
         "Authorization": f"Bearer {NTFY_TOKEN}"
     }
     try:
-        response = requests.post(f"{NTFY_URL}/{NTFY_TOPIC}", data=message.encode('utf-8'), headers=headers)
+        response = requests.post(f"{NTFY_URL}/{NTFY_TOPIC}", data=message.encode('utf-8'), headers=headers, timeout=10)
         response.raise_for_status()
         logging.info(f"Notification sent: {message}")
     except requests.RequestException as e:
         logging.error(f"Failed to send notification: {e}")
+        print(f"Warning: Notification failed - {e}")
 
 def run_command(command, capture_output=True):
     """Run a shell command and optionally capture output."""
@@ -71,14 +72,15 @@ def ensure_backup_dir():
         print(f"Created backup directory: {BACKUP_ROOT}")
 
 def pause_containers():
-    """Pause all running Docker containers."""
-    print("Pausing running containers...")
+    """Pause all running Docker containers except ntfy."""
+    print("Pausing running containers (excluding ntfy)...")
     paused_containers = []
     try:
         for container in docker_client.containers.list(filters={"status": "running"}):
-            container.pause()
-            paused_containers.append(container)
-            logging.info(f"Paused container: {container.name}")
+            if "ntfy" not in container.name.lower():
+                container.pause()
+                paused_containers.append(container)
+                logging.info(f"Paused container: {container.name}")
         print(f"Paused {len(paused_containers)} containers")
         send_notification(f"Paused {len(paused_containers)} containers for backup")
         return paused_containers
