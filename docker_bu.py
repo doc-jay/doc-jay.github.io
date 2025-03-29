@@ -15,7 +15,7 @@ logging.basicConfig(
 
 # Configuration
 SOURCE_DIR = "/mnt/docker_storage"  # Your Docker persistent data location
-BACKUP_ROOT = "/mnt/pve/backup/docker"  # Proxmox backup area for Docker
+BACKUP_ROOT = "/mnt/docker_bu"  # Proxmox backup area for Docker
 DATE = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 BACKUP_DIR = os.path.join(BACKUP_ROOT, f"docker_backup_{DATE}")
 RETENTION_DAYS = 7  # Keep backups for 7 days
