@@ -21,7 +21,7 @@ logging.basicConfig(
 # Ntfy settings
 NTFY_URL = "http://172.25.47.113:3030"
 NTFY_TOPIC = "dockerbu"
-NTFY_TOKEN = "tk_50vh37nty27lm1wgbgu65kzgln69q"
+NTFY_TOKEN = "secret"
 
 # Backup configuration
 SOURCE_DIR = "/mnt/docker_storage"  # Where your Docker persistent data lives
