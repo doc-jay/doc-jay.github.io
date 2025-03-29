@@ -2,7 +2,7 @@
 
 # Docker Backup Script
 # Version 1.1 - 2025-03-29
-# Initial version with container pausing, ntfy notifications, and real-time console output
+# Updated to exclude ntfy from pausing and prevent rsync chown errors
 
 import os
 import subprocess
@@ -107,7 +107,8 @@ def backup_docker_data():
     paused_containers = pause_containers()
     try:
         print("Starting backup...")
-        rsync_cmd = f"rsync -avh --progress {SOURCE_DIR}/ {BACKUP_DIR}/"
+        # Modified rsync command to exclude owner and group preservation
+        rsync_cmd = f"rsync -rhv --no-owner --no-group --progress {SOURCE_DIR}/ {BACKUP_DIR}/"
         logging.info(f"Starting backup from {SOURCE_DIR} to {BACKUP_DIR}")
         send_notification("Starting Docker data backup")
         run_command(rsync_cmd, capture_output=False)
