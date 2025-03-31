@@ -47,7 +47,7 @@ mkdir -p /var/log
 
 send_ntfy() {
     local title="$1"
-    local message="$2"
+    local message="$2 🤖"  # Add robot emoji to the message
     curl -H "Authorization: Bearer $NTFY_TOKEN" -H "Title: $title" -d "$message" "$NTFY_URL/$NTFY_TOPIC"
 }
 
