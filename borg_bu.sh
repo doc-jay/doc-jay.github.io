@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # BorgBackup Script
-# Version 1.1 - 2025-03-31
+# Version 1.2 - 2025-03-31
 #
 # Usage:
 #   - To perform a backup: ./borg_bu.sh
