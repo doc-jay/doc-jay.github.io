@@ -1,0 +1,146 @@
+# Define any number subscriptions in a single file, or use multiple files to organize (i.e by genre)
+
+Salvage Workshop:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Salvage Workshop"
+    url: "https://www.youtube.com/@SalvageWorkshop/videos"
+    # Optional
+    tv_show_genre: "Restoration"
+
+PHAD:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+    #- "chunk_initial_download"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Pine Hollow Auto Diagnostics"
+    url: "https://www.youtube.com/@PineHollowAutoDiagnostics/videos"
+    # Optional
+    tv_show_genre: "Automotive"
+
+Diesel Creek:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Diesel Creek"
+    url: "https://www.youtube.com/@DieselCreek/videos"
+    # Optional
+    tv_show_genre: "Heavy Equipment"
+
+Champions Club:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Champions Club"
+    url: "https://www.youtube.com/@championsclubx/videos"
+    # Optional
+    tv_show_genre: "Technical Analysis"
+
+DDD:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Dig, Drive, DIY"
+    url: "https://www.youtube.com/@digdrivediy/videos"
+    # Optional
+    tv_show_genre: "DIY"
+
+WWW:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Watch Wes Work"
+    url: "https://www.youtube.com/@WatchWesWork/videos"
+    # Optional
+    tv_show_genre: "Automotive"
+
+Awesome Open Source:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+    #- "chunk_initial_download"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Awesome Open source"
+    url: "https://www.youtube.com/@AwesomeOpenSource/videos"
+    # Optional
+    tv_show_genre: "Self Hosting"
+
+Andrew Camarata:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+    #- "chunk_initial_download"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Andrew Camarata"
+    url: "https://www.youtube.com/@AndrewCamarata/videos"
+    # Optional
+    tv_show_genre: "Heavy Equipment"
+
+CEE:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+    #- "chunk_initial_download"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Cutting Edge Engineering"
+    url: "https://www.youtube.com/@cuttingedgeengineering/videos"
+    # Optional
+    tv_show_genre: "Machining, Welding, Hydraulic"
+
+PNWH:
+  # Mix and match any number of presets to use. You can either lump all settings into
+  # a single preset to save some lines, or modularize them and use many.
+  preset:
+    - "yt_channel"
+    - "only_recent_videos"
+    #- "chunk_initial_download"
+
+  overrides:
+    # Required to specify for every subscription
+    tv_show_name: "Pacific Northwest Hillbilly"
+    url: "https://www.youtube.com/@PacificNorthwestHillbilly/videos"
+    # Optional
+    tv_show_genre: "Machining, Welding, Heavy Equipment"
