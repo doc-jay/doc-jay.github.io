@@ -1,0 +1,135 @@
+# v1.3
+# Script name to be included in logs, etc | 4.25.25
+# FQDN duncok.n0thing.vip
+
+:local scriptName "Cloudflare_DDNS"
+:local mikrotikId "Duncan"
+:local cfToken "secret"
+:local cfZoneId "secret"
+:local domain "duncok.n0thing.vip"
+:local keepDnsRecordDetails true
+:local dnsType "A"
+:local dnsTTL 1
+:local dnsProxied false
+:local cfDnsId "secret"
+:local wanInterface "ether1"
+:local externalIpLookup false
+:local externalDnsResolver false
+:local dnsResolver "1.1.1.1"
+:local useDnsRecords true
+
+:local ntfyUrl "https://ntfy.tims.fyi"
+:local ntfyTopic "DNS-Update"
+:local ntfyToken "secret"
+
+:local logPrefix "$scriptName ($domain)"
+
+# Updated sendNtfy function with title support
+:local sendNtfy do={
+  :local title $1
+  :local message $2
+  :local headers ("Authorization: Bearer $ntfyToken,Title: $title")
+  :do {
+    /tool fetch mode=https http-method=post url="$ntfyUrl/$ntfyTopic" http-header-field="$headers" http-data="$message" output=none
+    :log info "$logPrefix: ntfy notification sent: $title - $message"
+  } on-error {
+    :log error "$logPrefix: Failed to send ntfy notification: $title - $message"
+  }
+}
+
+:local currentIP 
+:local ipLookupFailed false
+:if ($externalIpLookup) do={
+  :do {
+    :local httpResponse [/tool fetch mode=https http-method=get url="https://myip.wtf/text" as-value output=user]
+    :if ($httpResponse->"status" = "finished") do={
+      :set currentIP [:pick ($httpResponse->"data") 0 ([:len ($httpResponse->"data")] - 1)]
+    }
+  } on-error {
+    :set ipLookupFailed true
+    :log warning "$scriptName: Unable to retrieve address from external service. Fallback to use locally retrieved."
+  }
+}
+:if ($ipLookupFailed) do={
+  $sendNtfy $mikrotikId ("WARNING: External IP lookup failed for " . $domain)
+}
+
+:if ([:len $currentIP] = 0) do={
+  :if ([/interface get $wanInterface value-name=running]) do={
+    :set currentIP [/ip address get [find interface=$wanInterface] address]
+    :set currentIP [:pick $currentIP 0 [:find $currentIP "/"]]
+  } else={
+    :log error "$logPrefix: $wanInterface is not currently running, so therefore will not update."
+    $sendNtfy $mikrotikId ("ERROR: Interface " . $wanInterface . " not running for " . $domain)
+    :error "$wanInterface not running"
+  }
+}
+
+:local previousIP
+:local cfApiDnsRecordURL "https://api.cloudflare.com/client/v4/zones/$cfZoneId/dns_records/$cfDnsId"
+:local cfApiDnsRecordsListURL "https://api.cloudflare.com/client/v4/zones/$cfZoneId/dns_records?type=A&name=$domain"
+:local authHeader "Authorization: Bearer $cfToken"
+
+:if ([:len $cfDnsId] = 0) do={
+  :log info "No DNS id provided. Overriding resolver configuration and accessing DNS Records to retrieve id and IP address"
+  :do {
+    :local httpResponse [/tool fetch mode=https http-method=get url="$cfApiDnsRecordsListURL" http-header-field="$authHeader" as-value output=user]
+    :if ($httpResponse->"status" = "finished") do={
+      :local jsonData [:deserialize from=json value=($httpResponse->"data")]
+      :set cfDnsId ($jsonData->"result"->0->"id")
+      :set previousIP ($jsonData->"result"->0->"content")
+    }
+  } on-error {
+    :log error "$logPrefix: Unable to access Cloudflare servers for retrieving information"
+    $sendNtfy $mikrotikId ("ERROR: Failed to retrieve DNS record for " . $domain)
+    :error "Cloudflare API error"
+  }
+} else={
+  :if ($dnsProxied = false and $useDnsRecords = false) do={
+    :do {
+      :if ($externalDnsResolver) do={
+        :set previousIP [:resolve domain-name=$domain server=$dnsResolver]
+      } else={
+        :set previousIP [:resolve domain-name=$domain]
+      }
+    } on-error {
+      :log warning "$logPrefix: Unable to locally resolve DNS name."
+      $sendNtfy $mikrotikId ("WARNING: DNS resolution failed for " . $domain)
+    }
+  } else={
+    :do {
+      :local httpResponse [/tool fetch mode=https http-method=get url="$cfApiDnsRecordURL" http-header-field="$authHeader" as-value output=user]
+      :if ($httpResponse->"status" = "finished") do={
+        :set previousIP ([:deserialize from=json value=($httpResponse->"data")]->"result"->"content")
+      }
+    } on-error {
+      :log error "$logPrefix: Unable to access Cloudflare servers for retrieving information"
+      $sendNtfy $mikrotikId ("ERROR: Failed to retrieve previous IP for " . $domain)
+      :error "Cloudflare API error"
+    }
+  }
+}
+
+:if ($currentIP != $previousIP) do={
+  :log info "$logPrefix: Current IP ($currentIP) is not equal to previous IP ($previousIP), update needed"
+  :local headers "Content-type:application/json,$authHeader"
+  :local payload
+  :if ($keepDnsRecordDetails) do={
+    :set payload "{\"type\":\"$dnsType\",\"name\":\"$domain\",\"content\":\"$currentIP\"}"
+  } else={
+    :set payload "{\"type\":\"$dnsType\",\"name\":\"$domain\",\"content\":\"$currentIP\",\"ttl\":$dnsTTL,\"proxied\":$dnsProxied}"
+  }
+  :do {
+    :local httpResponse [/tool fetch mode=https http-method=put url="$cfApiDnsRecordURL" http-header-field="$headers" http-data="$payload" as-value output=user]
+    :if ($httpResponse->"status" = "finished") do={
+      :log info "$logPrefix: Updated on Cloudflare with IP $currentIP"
+      $sendNtfy $mikrotikId ("SUCCESS: DNS updated for " . $domain . " to " . $currentIP . " (was " . $previousIP . ")")
+    }
+  } on-error {
+    :log error "$logPrefix: Unable to access Cloudflare servers for updating information"
+    $sendNtfy $mikrotikId ("ERROR: DNS update failed for " . $domain . " to " . $currentIP)
+    :error "Cloudflare API error"
+  }
+} else={
+  :log info "$logPrefix: IP address ($previousIP) unchanged, no update needed"
+}
