@@ -1,0 +1,112 @@
+configuration:
+  working_directory: '/tmp_cache'
+  persist_logs:
+    logs_directory: "/config/log"
+
+presets:
+  yt_channel:
+    preset:
+      # Prebuilt TV show presets for all popular players, hand-crafted by me :)
+      # Choose one or use all of them to ensure cross compatibility
+      #- "kodi_tv_show_by_date"
+      #- "jellyfin_tv_show_by_date"
+      - "plex_tv_show_by_date"
+      # Prebuilt presets for how to format seasons/episodes
+      - "season_by_year__episode_by_month_day"
+
+      # Choose one of the following season/episode formats:
+      # - "season_by_year__episode_by_month_day"
+      # - "season_by_year_month__episode_by_day"
+      # - "season_by_year__episode_by_month_day_reversed"
+      # - "season_by_year__episode_by_download_index"
+
+      #- "season_by_year__episode_by_month_day_reversed"  # replace with desired season/episode format
+      # Include any of the presets listed below in your 'main preset' if you want
+      # it applied to every TV show. Or, use them on the individual subscriptions.
+      - "only_recent_videos"
+      - "add_subtitles"
+      - "sponsorblock"
+      # - "include_info_json"
+      #- chunk_initial_download
+      - "best_video_quality"
+
+    overrides:
+      tv_show_directory: "/tv_shows"  # Replace with desired directory
+
+# Preset to only download and keep recent videos
+  only_recent_videos:
+
+    # Only download videos within the download_range
+    date_range:
+      #before: "now"
+      after: "now-10days"
+    #overrides:
+      #download_range: "2months"
+
+    # Stops fetching metadata if the video is out of range (saves time + bandwidth)
+    ytdl_options:
+      break_on_existing: true
+      #max_downloads: 20
+      cookiefile: "/config/cookies/cookies-yt.txt"
+      cookiefile: "/config/cookies/cookies-x.txt"
+      extractor_args:
+        youtube:
+          lang:
+            - "en"
+
+    output_options:
+      output_directory: "/tv_shows/{tv_show_name}"
+      file_name: "Season {upload_year}/{upload_month}/{tv_show_name} - s{upload_year}e{upload_month_padded}{upload_day_padded} - {title_sanitized}.{ext}"
+      thumbnail_name: "Season {upload_year}/{upload_month}/{tv_show_name} - s{upload_year}e{upload_month_padded}{upload_day_padded} - {title_sanitized}.{thumbnail_ext}"
+
+####################################################################################################
+
+  # Preset to cut sponsor segments from videos
+  sponsorblock:
+    # If you download using cron, it is wise to add a delay before downloading ad-filled content to
+    # give folks time to submit sponsor segments. Uncomment to wait 2 days before download a video.
+    # date_range:
+    #  before: "today-2days"
+
+    chapters:
+      # Remove all of these sponsorblock categories
+      sponsorblock_categories:
+        - "intro"
+        - "outro"
+        - "selfpromo"
+        - "preview"
+        - "interaction"
+        - "sponsor"
+        - "music_offtopic"
+      remove_sponsorblock_categories: "all"
+      force_key_frames: False
+
+####################################################################################################
+
+  # Preset to download subtitles (either by file or embedded)
+  add_subtitles:
+    subtitles:
+      #Embed subtitles into the video
+      embed_subtitles: True
+      # And/or download them as a file. Uncomment to download as file:
+      # subtitles_name: "Season {upload_year}/{upload_month}/{tv_show_name} - s{upload_year}e{upload_month_padded}{upload_day_padded} - {title_sanitized}.{lang}.{subtitles_ext}"
+      # subtitles_type: "srt"
+      languages: "en"  # supports list of multiple languages
+      allow_auto_generated_subtitles: True  # allow auto subtitles
+
+####################################################################################################
+
+  # Preset for the hoarders who want to also save the info.json file
+  include_info_json:
+    output_options:
+      info_json_name: "{tv_show_name} - {episode_file_path}.{info_json_ext}"
+
+####################################################################################################
+
+  # Preset to maintan download archive
+  #enable_archive:
+   #output_options:
+      #maintain_download_archive: True 
+
+ ####################################################################################################
+ 
