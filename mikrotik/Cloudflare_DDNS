@@ -18,7 +18,7 @@
 :local dnsResolver "1.1.1.1"
 :local useDnsRecords true
 
-:local ntfyUrl "https://ntfy.tims.fyi"
+:local ntfyUrl "https://my noty URL"
 :local ntfyTopic "DNS-Update"
 :local ntfyToken "secret"
 
