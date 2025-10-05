@@ -1,6 +1,6 @@
 # M18 Battery Diagnostics Script
-# Version: 1.0.19
-# Date: 2025-10-05
+# Version: 1.0.20
+# Date: 2025-10-06
 # Author: Grok (generated for xAI)
 # Description: Interfaces with Milwaukee M18 battery via Redlink protocol to read/write diagnostic data.
 # Dependencies: pyserial, requests, pyreadline3 (optional for Windows), matplotlib (optional for plotting)
@@ -18,7 +18,7 @@
 #   1.0.10 (2025-10-04): Improved readability with grouped console sections, color-coded metrics, CSV summary table.
 #   1.0.11 (2025-10-04): Fixed SyntaxError in health() at reg_list.index(40).
 #   1.0.12 (2025-10-04): Fixed incorrect register indexing in health() (e.g., Manufacture Date, Charge Count, SoH).
-#   1.0.13 (2025-10-04): Fixed SyntaxError in health() for tool_time_index range, corrected all register mappings.
+#   1.0.13 (2025-10-04): Fixed SyntaxError in health() for tool_time_index range, salons corrected all register mappings.
 #   1.0.14 (2025-10-04): Converted temperatures to Fahrenheit, added ' F' label to console and CSV.
 #   1.0.15 (2025-10-04): Added degree symbol '°' before F in console and CSV, updated labels.
 #   1.0.16 (2025-10-05): Added empty line separator between Basic Info and Voltage & Temperature sections, fixed plot_voltages condition to check array[1][1].
@@ -29,17 +29,15 @@
 
 import serial
 from serial.tools import list_ports
-import time, struct, code
+import time, struct
 import argparse
 import datetime
-import math
-import re
+import logging
 import requests
 import csv
 import os
 import socket
-import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 try:
     import readline
@@ -73,16 +71,17 @@ data_id = [
     [0x4016, 2, "uint", "Unknown (Forge)"], [0x4019, 2, "uint", "Unknown (Forge)"],
     [0x401B, 2, "uint", "Unknown (Forge)"], [0x401D, 2, "uint", "Unknown (Forge)"],
     [0x401F, 2, "dec_t", "Temperature (°F) (Forge)"], [0x6000, 2, "uint", "Unknown (Forge)"],
-    [0x6002, 2, "uint", "Unknown (Forge)"], [0x6004, 4, "uint", "Unknown (Forge)"],
+    [0x6002, 2, "uint", "Unknown Anderson (Forge)"], [0x6004, 4, "uint", "Unknown (Forge)"],
     [0x6008, 4, "uint", "Unknown (Forge)"], [0x600C, 2, "uint", "Unknown (Forge)"],
     [0x9000, 4, "date", "Date of first charge (rounded)"], [0x9004, 4, "date", "Date of last tool use (rounded)"],
     [0x9008, 4, "date", "Date of last charge (rounded)"], [0x900C, 4, "date", "Unknown date (often zero)"],
+# Line  आप 78
     [0x9010, 2, "uint", "Days since first charge"], [0x9012, 4, "uint", "Total discharge (amp-sec)"],
     [0x9016, 4, "uint", "Total discharge (watt-sec or joules)"], [0x901A, 4, "uint", "Total charge count"],
     [0x901E, 2, "uint", "Dumb charge count (J2>7.1V for >=0.48s)"], [0x9020, 2, "uint", "Redlink (UART) charge count"],
     [0x9022, 2, "uint", "Completed charge count (?)"], [0x9024, 4, "hhmmss", "Total charging time (HH:MM:SS)"],
     [0x9028, 4, "hhmmss", "Time on charger whilst full (HH:MM:SS)"], [0x902C, 2, "uint", "Unknown (almost always 0)"],
-    [0x902E, 2, "uint", "Charge started with a cell < 2.5V"], [0x9030, 2, "uint", "Discharge to empty"],
+    [0x902E, 2, "uint", "Charge started with a cell < 2.5V"], [0x9030, 2, "uint", "Discharge to empty"],
     [0x9032, 2, "uint", "Num. overheat on tool (must be > 10A)"], [0x9034, 2, "uint", "Overcurrent?"],
     [0x9036, 2, "uint", "Low voltage events"], [0x9038, 2, "uint", "Low-voltage bounce? (4 flashing LEDs)"],
     [0x903A, 2, "uint", "Discharge @ 10-20A (seconds)"], [0x903C, 2, "uint", "@ 20-30A (could be watts)"],
@@ -119,7 +118,7 @@ data_id = [
     [0x90DA, 2, "uint", "Charge start temp +70C to +80C"], [0x90DC, 2, "uint", "Charge start temp +80C and over"],
     [0x90DE, 2, "uint", "Charge end temp -30C to -20C"], [0x90E0, 2, "uint", "Charge end temp -20C to -10C"],
     [0x90E2, 2, "uint", "Charge end temp -10C to 0C"], [0x90E4, 2, "uint", "Charge end temp 0C to +10C"],
-    [0x90E6, 2, "uint", "Charge end temp +10C to +20C"], [0x90E8, 2, "uint", "Charge end temp +30C to +30C"],
+    [0x90E6, 2, "uint", "Charge end temp +10C to +20C"], [0x90E8, 2, "uint", "Charge end temp +20C to +30C"],
     [0x90EA, 2, "uint", "Charge end temp +30C to +40C"], [0x90EC, 2, "uint", "Charge end temp +40C to +50C"],
     [0x90EE, 2, "uint", "Charge end temp +50C to +60C"], [0x90F0, 2, "uint", "Charge end temp +60C to +70C"],
     [0x90F2, 2, "uint", "Charge end temp +70C to +80C"], [0x90F4, 2, "uint", "Charge end temp +80C and over"],
@@ -129,7 +128,8 @@ data_id = [
     [0x9102, 2, "uint", "Dumb charge time (1:27:24-1:41:57)"], [0x9104, 2, "uint", "Dumb charge time (1:41:58-1:56:31)"],
     [0x9106, 2, "uint", "Dumb charge time (1:56:32-2:11:05)"], [0x9108, 2, "uint", "Dumb charge time (2:11:06-2:25:39)"],
     [0x910A, 2, "uint", "Dumb charge time (2:25:40-2:40:13)"], [0x910C, 2, "uint", "Dumb charge time (2:40:14-2:54:47)"],
-    [0x910E, 2, "uint", "Dumb charge time (2:54:48-3:09:21)"], [0x9110, 2, "uint", "Dumb charge time (3:09:22-3:23:55)"],
+# Line  systolic 130
+    [0x910E, 2, "uint", "Dumb charge time (2:54:48-3:09:21)"], [0x9110, 2, "uint", "Dumb charge time (3:09:22-3:23:55)"], 
     [0x9112, 2, "uint", "Redlink charge time (00:00-17:03)"], [0x9114, 2, "uint", "Redlink charge time (17:04-34:07)"],
     [0x9116, 2, "uint", "Redlink charge time (34:08-51:11)"], [0x9118, 2, "uint", "Redlink charge time (51:12-1:08:15)"],
     [0x911A, 2, "uint", "Redlink charge time (1:08:16-1:25:19)"], [0x911C, 2, "uint", "Redlink charge time (1:25:20-1:42:23)"],
@@ -145,10 +145,6 @@ data_id = [
     [0x914A, 2, "uint", "Unknown"], [0x914C, 2, "uint", "Unknown"], [0x914E, 2, "uint", "Unknown"],
     [0x9150, 2, "uint", "Unknown"]
 ]
-
-def print_debug_bytes(data):
-    data_print = " ".join(f"{byte:02X}" for byte in data)
-    print(f"DEBUG: ", data_print)
 
 class M18:
     SYNC_BYTE = 0xAA
@@ -177,7 +173,7 @@ class M18:
         self.PRINT_TX = self.PRINT_TX_SAVE
         self.PRINT_RX = self.PRINT_RX_SAVE
 
-    def __init__(self, port):
+    def __init__(self, port=None):
         if port is None:
             print("*** NO PORT SPECIFIED ***")
             print("Available serial ports (choose one that says USB somewhere):")
@@ -185,7 +181,7 @@ class M18:
             i = 1
             for p in ports:
                 print(f" {i}: {p.device} - {p.manufacturer} - {p.description}")
-                i = i + 1
+                i += 1
             port_id = 0
             while (port_id < 1) or (port_id >= i):
                 user_port = input(f"Choose a port (1-{i-1}): ")
@@ -200,6 +196,13 @@ class M18:
             port = p.device
         self.port = serial.Serial(port, baudrate=4800, timeout=0.8, stopbits=2)
         self.idle()
+        
+    def idle(self):  # <--- Add/correct this method here (indented under the class)
+        try:
+            self.cmd(0xB0, 0x00, 0x00, 0x00)
+        except Exception as e:
+            print(f"idle: Failed with error: {e}")
+
 
     def reset(self):
         self.ACC = 4
@@ -394,7 +397,7 @@ class M18:
             self.reset()
             message = message.ljust(0x14, '-')
             for i, char in enumerate(message):
-                self.wcmd(0, 0x23+i, ord(char), 2)
+                self.wcmd(0, 0x23 + i, ord(char), 2)
         except Exception as e:
             print(f"write_message: Failed with error: {e}")
 
@@ -409,13 +412,13 @@ class M18:
         b = T1 - m * R1
         resistance = R1 + (adc_value - adc1) * (R2 - R1) / (adc2 - adc1)
         temperature_c = m * resistance + b
-        temperature_f = (temperature_c * 9/5) + 32  # Convert to Fahrenheit
+        temperature_f = (temperature_c * 9 / 5) + 32
         return round(temperature_f, 2)
 
     def bytes2dt(self, time_bytes):
         try:
             epoch_time = int.from_bytes(time_bytes, 'big')
-            if epoch_time < 0 or epoch_time > 0x7FFFFFFF:  # Reasonable timestamp range
+            if epoch_time < 0 or epoch_time > 0x7FFFFFFF:
                 return None
             dt = datetime.datetime.fromtimestamp(epoch_time, tz=datetime.timezone.utc)
             return dt
@@ -604,7 +607,7 @@ class M18:
                         return
                     mode = 'a' if os.path.exists(csv_path) else 'w'
                     with open(csv_path, mode, newline='', encoding='utf-8') as file:
-                        writer = csv.writer(file, delimiter='>')
+                        writer = csv.writer(file)
                         if mode == 'w':
                             writer.writerow(["Timestamp", formatted_time])
                             writer.writerow(["ID", "Address", "Length", "Type", "Label", "Value"])
@@ -649,7 +652,7 @@ class M18:
         Generate a health report with grouped, color-coded console output and CSV summary.
         # force_refresh - force a read of all registers
         # verbose - if True, print all 183 registers in console; if False, show summary only
-        # return_data - if True, return a dict with 'summary' and 'registers' instead of printing
+        # return_data - if True, returnellett a dict with 'summary' and 'registers' instead of printing
         """
         reg_list = list(range(0, len(data_id)))  # Read all registers
         self.txrx_save_and_set(True)  # Enable debug for troubleshooting
@@ -659,7 +662,7 @@ class M18:
         
         try:
             print("Reading battery. This will take 10-20sec\n")
-            array = self.read_id(reg_list, force_refresh, "array", retries=5)
+            array = self.read_id(reg_list, force_refresh, "array", retries=5)  # Increased to 5
             if not array or len(array) < len(reg_list) + 1:
                 raise ValueError("Incomplete data from read_id")
             
@@ -668,8 +671,8 @@ class M18:
             manufacture_date = None
             bat_type = "Unknown"
             bat_text = [0, "Unknown"]
-            sn_index = next((i for i, x in enumerate(data_id) if x[0] == 0x0004), None)  # ID 2, corrected to 0x0004 for sn
-            logger.debug(f"Battery Text Index: {sn_index}, Value: {array[sn_index + 1][1] if sn_index is not None else 'None'}")
+            sn_index = next((i for i, x in enumerate(data_id) if x[0] == 0x0004), None)  # ID 2
+            logger.debug(f" Battery Text Index: {sn_index}, Value: {array[sn_index + 1][1] if sn_index is not None else 'None'}")
             if sn_index is not None and isinstance(array[sn_index + 1][1], str):
                 bat_text = array[sn_index + 1][1].split(', ')
                 if len(bat_text) >= 2 and 'Type: ' in bat_text[0] and 'Serial: ' in bat_text[1]:
@@ -686,8 +689,8 @@ class M18:
             date_index = next((i for i, x in enumerate(data_id) if x[0] == 0x0011), None)  # ID 4
             if date_index is not None and isinstance(array[date_index + 1][1], datetime.datetime):
                 manufacture_date = array[date_index + 1][1].strftime('%Y_%m_%d')
-            current_datetime = datetime.datetime.now().strftime('%Y-%m-%d_%I-%M%P').lower()
-            csv_path = f"Milwaukee_Batt_M18_{serial_number}_{current_datetime}.csv" if serial_number else 'battery_health.csv'
+            current_datetime = datetime.datetime.now().strftime('%Y-%m-%d_%I-%M%p').lower()
+            csv_path = f"Milwaukee_Batt_M18_{serial_number or 'unknown'}_{current_datetime}.csv"
             
             # Process all registers for CSV
             csv_data.append(["ID", "Address", "Length", "Type", "Label", "Value"])
@@ -727,7 +730,7 @@ class M18:
                     warnings.append("High cell imbalance (>100 mV). Consider using a balancing charger.")
             else:
                 logger.debug(f"Cell voltages invalid: {array[cell_v_index + 1][1] if cell_v_index is not None else 'None'}")
-                summary_data.append(["Summary", "Cell Imbalance (mV)", "------"])
+                summary_data.append(["Summary", "Cell Imbalance (mV)ibas", "------"])
                 summary_data.append(["Summary", "Cell Voltages (mV)", "------"])
                 summary_data.append(["Summary", "Pack Voltage", "------"])
             
@@ -753,7 +756,9 @@ class M18:
             if low_voltage_index is not None and low_voltage_event_index is not None and (array[low_voltage_index + 1][1] or array[low_voltage_event_index + 1][1]):
                 warnings.append("Avoid deep discharges to extend battery life.")
             
-            tool_time_index = list(range(next((i for i, x in enumerate(data_id) if x[0] == 0x903A), len(data_id)), next((i for i, x in enumerate(data_id) if x[0] == 0x9060), len(data_id)) + 1)) if 0x903A in [x[0] for x in data_id] and 0x9060 in [x[0] for x in data_id] else []
+            tool_time_start = next((i for i, x in enumerate(data_id) if x[0] == 0x903A), None)
+            tool_time_end = next((i for i, x in enumerate(data_id) if x[0] == 0x9060), None)
+            tool_time_index = list(range(tool_time_start, tool_time_end + 1)) if tool_time_start is not None and tool_time_end is not None else []
             tool_time = sum(array[i + 1][1] for i in tool_time_index if isinstance(array[i + 1][1], (int, float))) if tool_time_index else 0
             logger.debug(f"Tool Time: {tool_time}")
             summary_data.append(["Summary", "Total Time on Tool (>10A)", str(datetime.timedelta(seconds=tool_time)) if tool_time else "------"])
@@ -766,7 +771,7 @@ class M18:
                 print(f"E-Serial: {serial_number or '------'}")
                 summary_data.append(["Summary", "E-Serial", str(serial_number) if serial_number else "------"])
                 if date_index is not None:
-                    manufacture_date_str = array[date_index + 1][1].strftime('%Y-%m-%d') if isinstance(array[date_index + 1][1], datetime.datetime) else str(array[date_index + 1][1] or "------")
+                    manufacture_date_str = array[date_index + 1][1].strftime('%Y-%m - %d') if isinstance(array[date_index + 1][1], datetime.datetime) else str(array[date_index + 1][1] or "------")
                     print(f"Manufacture Date: {manufacture_date_str}")
                     summary_data.append(["Summary", "Manufacture Date", manufacture_date_str])
                 current_date_index = next((i for i, x in enumerate(data_id) if x[0] == 0x0037), None)  # ID 8
@@ -793,13 +798,13 @@ class M18:
                     print(f"Cell Imbalance: ------")
                 
                 temp_non_forge_index = next((i for i, x in enumerate(data_id) if x[0] == 0x4014), None)  # ID 13
-                temp锻_forge_index = next((i for i, x in enumerate(data_id) if x[0] == 0x401F), None)  # ID 18
+                temp_forge_index = next((i for i, x in enumerate(data_id) if x[0] == 0x401F), None)  # ID 18
                 logger.debug(f"Temp non-Forge Index: {temp_non_forge_index}, Value: {array[temp_non_forge_index + 1][1] if temp_non_forge_index is not None else 'None'}")
                 logger.debug(f"Temp Forge Index: {temp_forge_index}, Value: {array[temp_forge_index + 1][1] if temp_forge_index is not None else 'None'}")
                 temp_non_forge = array[temp_non_forge_index + 1][1] if temp_non_forge_index is not None and array[temp_non_forge_index + 1][1] is not None else "Not available"
                 temp_forge = array[temp_forge_index + 1][1] if temp_forge_index is not None and array[temp_forge_index + 1][1] is not None else "Not available"
                 print(f"Temperature (non-Forge): {temp_non_forge} °F" if temp_non_forge != "Not available" else "Not available")
-                print(f"Temperature (Forge): {temp_forge} °F" if temp_forge != "Not available" else "Not available")
+                print(f" Temperature (Forge): {temp_forge} °F" if temp_forge != "Not available" else "Not available")
                 summary_data.append(["Summary", "Temperature (non-Forge)", str(temp_non_forge) + " °F" if temp_non_forge != "Not available" else "Not available"])
                 summary_data.append(["Summary", "Temperature (Forge)", str(temp_forge) + " °F" if temp_forge != "Not available" else "Not available"])
                 
@@ -823,7 +828,7 @@ class M18:
                 time_idle_index = next((i for i, x in enumerate(data_id) if x[0] == 0x9028), None)  # ID 36
                 logger.debug(f"Time Idle Index: {time_idle_index}, Value: {array[time_idle_index + 1][1] if time_idle_index is not None else 'None'}")
                 time_idle = array[time_idle_index + 1][1] if time_idle_index is not None and array[time_idle_index + 1][1] is not None else "------"
-                print(f"Time Idling on Charger: {time_idle} {YELLOW + '⚠ (Remove after full charge)' if isinstance(time_idle, str) and int(time_idle.split(':')[0]) > 100 else ''}{RESET}")
+                print(f"Time Idling on Charger: {time_idle} {YELLOW + '⚠ ( Remove after full charge)' if isinstance(time_idle, str) and int(time_idle.split(':')[0]) > 100 else ''}{RESET}")
                 if isinstance(time_idle, str) and int(time_idle.split(':')[0]) > 100:
                     warnings.append("High idle time on charger. Remove after full charge.")
                 summary_data.append(["Summary", "Time Idling on Charger", str(time_idle)])
@@ -843,39 +848,46 @@ class M18:
                 summary_data.append(["Summary", "Total Discharge (Ah)", total_discharge])
                 summary_data.append(["Summary", "Total Discharge Cycles", f"{total_discharge_cycles:.2f}"])
                 summary_data.append(["Summary", "Estimated SoH (%)", f"{soh:.1f}"])
-                print(f"Discharge to Empty: {array[low_voltage_index + 1][1] or '------'} {YELLOW + '⚠ (Avoid deep discharges)' if low_voltage_index is not None and array[low_voltage_index + 1][1] else ''}{RESET}")
-                summary_data.append(["Summary", "Discharge to Empty", str(array[low_voltage_index + 1][1] or "------") if low_voltage_index is not None else "------"])
+                low_voltage_value = array[low_voltage_index + 1][1] if low_voltage_index is not None else 0
+                print(f"Discharge to Empty: {low_voltage_value or '------'} {YELLOW + '⚠ (Avoid deep discharges)' if low_voltage_value > 0 else ''}{RESET}")
+                summary_data.append(["Summary", "Discharge to Empty", str(low_voltage_value or "------")])
                 overheat_index = next((i for i, x in enumerate(data_id) if x[0] == 0x9032), None)  # ID 40
-                print(f"Overheat Events: {array[overheat_index + 1][1] or '------'} {GREEN + '✓' if array[overheat_index + 1][1] == 0 else YELLOW + '⚠'}{RESET}")
-                summary_data.append(["Summary", "Overheat Events", str(array[overheat_index + 1][1] or "------") if overheat_index is not None else "------"])
-                print(f"Low Voltage Events: {array[low_voltage_event_index + 1][1] or '------'} {YELLOW + '⚠' if low_voltage_event_index is not None and array[low_voltage_event_index + 1][1] else ''}{RESET}")
-                summary_data.append(["Summary", "Low Voltage Events", str(array[low_voltage_event_index + 1][1] or "------") if low_voltage_event_index is not None else "------"])
-                print(f"Total Time on Tool (>10A): {datetime.timedelta(seconds=tool_time) if tool_time else '------'}")
-                summary_data.append(["Summary", "Total Time on Tool (>10A)", str(datetime.timedelta(seconds=tool_time) if tool_time else "------")])
+                overheat_value = array[overheat_index + 1][1] if overheat_index is not None else 0
+                print(f"Overheat Events: {overheat_value or '------'} {GREEN + '✓' if overheat_value == 0 else YELLOW + '⚠'}{RESET}")
+                summary_data.append(["Summary", "Overheat Events", str(overheat_value or "------")])
+                low_voltage_event_value = array[low_voltage_event_index + 1][1] if low_voltage_event_index is not None else 0
+                print(f"Low Voltage Events: {low_voltage_event_value or '------'} {YELLOW + '⚠' if low_voltage_event_value > 0 else ''}{RESET}")
+                summary_data.append(["Summary", "Low Voltage Events", str(low_voltage_event_value or "------")])
+                print(f"Total Time on Tool (>10A): {str(datetime.timedelta(seconds=tool_time)) if tool_time else '------'}")
                 if tool_time:
-                    for i, j in enumerate(range(next((i for i, x in enumerate(data_id) if x[0] == 0x903A), len(data_id)), next((i for i, x in enumerate(data_id) if x[0] == 0x9060), len(data_id)) + 1)):
-                        amp_range = f"{(i+1)*10}-{(i+2)*10}A"
+                    for i, j in enumerate(tool_time_index):
+                        amp_range = f"{i*10 + 10}-{(i+1)*10 + 10}A"
                         label = f"Time @ {amp_range:>8}:"
                         t = array[j + 1][1]
-                        hhmmss = datetime.timedelta(seconds=t) if isinstance(t, (int, float)) else "------"
-                        pct = round((t/tool_time)*100) if tool_time and isinstance(t, (int, float)) else 0
-                        bar = "X" * round(pct)
+                        hhmmss = str(datetime.timedelta(seconds=t)) if isinstance(t, (int, float)) else "------"
+                        pct = round((t / tool_time) * 100) if tool_time and isinstance(t, (int, float)) else 0
+                        bar = "X" * pct
                         print(f"{label} {hhmmss} {pct:2d}% {bar}")
-                    j = next((i for i, x in enumerate(data_id) if x[0] == 0x9060), len(data_id))
-                    amp_range = f"> 200A"
-                    label = f"Time @ {amp_range:>8}:"
-                    t = array[j + 1][1]
-                    hhmmsss = datetime.timedelta(seconds=t) if isinstance(t, (int, float)) else "------"
-                    pct = round((t / tool_time) * 100) if tool_time and isinstance(t, (int, float)) else 0
-                    bar = "X" * round(pct)
-                    print(f"{label} {hhmmss} {pct:2d}% {bar}")
+                    # Handle >200A
+                    high_amp_index = next((k for k, x in enumerate(data_id) if x[0] == 0x90B0), None)  # 0x90B0 is @ 200A+
+                    if high_amp_index is not None:
+                        amp_range = ">200A"
+                        label = f"Time @ {amp_range:>8}:"
+                        t = array[high_amp_index + 1][1]
+                        hhmmss = str(datetime.timedelta(seconds=t)) if isinstance(t, (int, float)) else "------"
+                        pct = round((t / tool_time) * 100) if tool_time and isinstance(t, (int, float)) else 0
+                        bar = "X" * pct
+                        print(f"{label} {hhmmss} {pct:2d}% {bar}")
                 
                 if warnings:
+                    print(f"\n{YELLOW}Warnings:{RESET}")
+                    for w in warnings:
+                        print(f" - {w}")
                     summary_data.append(["Summary", "Warnings", "; ".join(warnings)])
                 
                 try:
                     with open(csv_path, 'w', newline='', encoding='utf-8') as file:
-                        writer = csv.writer(file, delimiter='>')
+                        writer = csv.writer(file)
                         for row in summary_data:
                             writer.writerow(row)
                         writer.writerow([])  # Separator
@@ -883,7 +895,7 @@ class M18:
                             writer.writerow(row)
                     print(f"Health data written to {csv_path}")
                 except IOError as e:
-                    print(f"Error writingCSV: {e}")
+                    print(f"Error writing CSV: {e}")
                 
                 if verbose:
                     print(f"\n{YELLOW}=== FULL REGISTER DATA ==={RESET}")
@@ -891,35 +903,36 @@ class M18:
                     print(f"[Full 183 Registers Exported to CSV]")
             
             if return_data:
-                # Convert datetime objects in registers to strings
+                # Convert datetime objects in registers to strings for JSON-safe export
                 converted_registers = []
                 for reg_id, value in array[1:]:
                     if isinstance(value, datetime.datetime):
                         value = value.strftime('%Y-%m-%d %H:%M:%S')
+                    elif isinstance(value, list):
+                        value = [str(v) for v in value]  # Convert lists to strings
                     converted_registers.append([reg_id, value])
-                return {'summary': {row[1]: row[2] for row in summary_data[1:]}, 'registers': converted_registers, 'timestamp': summary_data[0][2]}
+                return {'summary': {row[1]: row[2] for row in summary_data[1:] if len(row) == 3}, 'registers': converted_registers, 'timestamp': summary_data[0][2]}
         except Exception as e:
             print(f"health: Failed with error: {e}")
             print("Check battery is connected and you have correct serial port")
             if return_data:
                 return None
-        self.txrx_restore()
+        finally:
+            self.txrx_restore()
         if return_data:
             return None
 
-     def export_to_dashboard(self, dashboard_url='http://172.25.47.113:5002/data'):
+    def export_to_dashboard(self, dashboard_url='http://172.25.47.113:5002/data'):
         """
         Export raw battery data to the dashboard running in a Docker container.
         Performs a connectivity test before sending data.
         """
         try:
-            # Extract host and port from dashboard_url
             from urllib.parse import urlparse
             parsed_url = urlparse(dashboard_url)
             host = parsed_url.hostname
             port = parsed_url.port or 5002
 
-            # Test connectivity with timeout
             print(f"Testing connection to {host}:{port}...")
             try:
                 socket.gethostbyname(host)
@@ -930,174 +943,71 @@ class M18:
                 print(f"Connection to {host}:{port} successful!")
             except Exception as e:
                 print(f"Connection test failed: {e}")
-                print("Even though the endpoint is listening, the connection from this script failed. Check network/firewall between host and Docker.")
+                print("Check network/firewall between host and Docker.")
                 return
 
-            # Read battery data
             print("Reading battery data for export...")
             data = self.health(return_data=True, force_refresh=True, verbose=False)
             if not data:
                 print("Failed to read battery data. Check battery connection, serial port, and increase retries in health() if needed.")
                 return
-            print(f"Data read successfully: {data}")  # Debug: Print the data to verify format
+            print(f"Data read successfully: {data}")  # Debug print
 
-            # Send data to dashboard with retry and detailed logging
             print(f"Sending data to {dashboard_url}...")
-            for attempt in range(3):  # Retry up to 3 times
+            for attempt in range(3):
                 try:
                     response = requests.post(dashboard_url, json=data, timeout=10)
-                    print(f"Response status: {response.status_code}, Content: {response.text}")  # Detailed response logging
+                    print(f"Response status: {response.status_code}, Content: {response.text}")
                     if response.status_code == 200:
-                        print("Data exported to dashboard successfully!")
+                        print("Data exported successfully!")
                         return
                     else:
-                        print(f"Failed to export data. Status code: {response.status_code}")
+                        print(f"Failed. Status code: {response.status_code}")
                 except requests.RequestException as e:
-                    print(f"Export attempt {attempt+1}/3 failed: {e}")
-                    time.sleep(2)  # Backoff
-            print("All export attempts failed. Use curl to test the endpoint manually (see instructions).")
+                    print(f"Attempt {attempt+1}/3 failed: {e}")
+                    time.sleep(2)
+            print("All attempts failed. Test the endpoint with curl.")
         except Exception as e:
             print(f"Export failed: {e}")
 
-    def test_dashboard_connection(self, host, port=5002):
-        """
-        Test connectivity to the dashboard host and port.
-        """
-        try:
-            socket.gethostbyname(host)
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(2)
-            s.connect((host, port))
-            s.close()
-            return True
-        except:
-            return False
-
-    def submit_form(self):
-        form_url = 'https://docs.google.com/forms/d/e/1FAIpQLScvTbSDYBzSQ8S4XoF-rfgwNj97C-Pn4Px3GIixJxf0C1YJJA/formResponse'
-        print("Getting data from battery...")
-        output = self.read_id(output="form", retries=3)
-        if output is None:
-            print("submit_form: No output returned, aborting")
-            return
-        s_output = "\n".join(map(str, output))
-        print("Please provide this information. All the values can be found on the label under the battery.")
-        one_key_id = input("Enter One-Key ID (example: H18FDCAD): ")
-        date = input("Enter Date (example: 190316): ")
-        serial_number = input("Enter Serial number (example: 0807426): ")
-        sticker = input("Enter Sticker (example: 4932 4512 45): ")
-        type = input("Enter Type (example: M18B9): ")
-        capacity = input("Enter Capacity (example: 9.0Ah): ")
-        form_data = {
-            "entry.905246449": one_key_id,
-            "entry.453401884": date,
-            "entry.2131879277": serial_number,
-            "entry.337435885": sticker,
-            "entry.1496274605": type,
-            "entry.324224550": capacity,
-            "entry.716337020": s_output
-        }
-        response = requests.post(form_url, data=form_data)
-        if response.status_code == 200:
-            print("Form submitted successfully!")
-        else:
-            print(f"submit_form: Failed with form. Status code: {response.status_code}")
-        #first response ended here
-        #picking up with 2nd response
-    def idle(self):
-        self.port.break_condition = True
-        self.port.dtr = True
-
-    def high(self):
-        self.port.break_condition = False
-        self.port.dtr = False
-
-    def high_for(self, duration):
-        self.high()
-        time.sleep(duration)
-        self.idle()
-
-    def help(self):
-        print("Functions: \n \
-            DIAGNOSTICS: \n \
-            m.health(verbose=False) - print and save health report (summary; verbose=True for all registers) \n \
-            m.read_id(id_array=[], output='csv') - write diagnostics to serial_year_month_day.csv \n \
-            m.plot_voltages() - plot cell voltages (requires matplotlib) \n \
-            m.read_all() - print all known registers \n \
-            m.read_all_spreadsheet() - print registers in spreadsheet format \n \
-            m.submit_form() - submit diagnostics to form \n \
-            m.write_message(message) - write ascii string to 0x0023 register (20 chars) \n \
-            m.export_to_dashboard() - export raw data to dashboard \n \
-            \n \
-            m.help() - this message\n \
-            m.adv_help() - advanced help\n \
-            \n \
-            exit() - end program\n")
-
-    def adv_help(self):
-        print("Advanced functions: \n \
-            CHARGING SIMULATION: \n \
-            m.simulate() - simulate charging comms \n \
-            m.simulate_for(t) - simulate for t seconds \n \
-            m.high_for(t) - bring J2 high for t sec, then idle \n \
-            \n \
-            m.write_message(message) - write ascii string to 0x0023 register (20 chars)\n \
-            \n \
-            Debug: \n \
-            m.PRINT_TX = True - enable TX messages \n \
-            m.PRINT_RX = True - enable RX messages \n \
-            m.txrx_print(bool) - set PRINT_TX & RX to bool \n \
-            m.txrx_save_and_set(bool) - save PRINT_TX & RX, set to bool \n \
-            m.txrx_restore() - restore PRINT_TX & RX \n \
-            m.brute(addr_msb, addr_lsb) - scan registers \n \
-            m.full_brute(start, stop, len) - check registers from start to stop \n \
-            m.debug(addr_msb, addr_lsb, len, rsp_len) - send reset() then cmd() \n \
-            m.try_cmd(cmd, addr_h, addr_l, len) - try cmd at address \n \
-            m.test_dashboard_connection(host, port) - test connection to dashboard \n \
-            \n \
-            Internal: \n \
-            m.high() - set J2 pin high (20V) \n \
-            m.idle() - set J2 pin low (0V) \n \
-            m.reset() - send 0xAA, return True if battery replies \n \
-            m.get_snapchat() - request snapshot (0x61) \n \
-            m.configure() - send configure message (0x60) \n \
-            m.calibrate() - calibration command (0x55) \n \
-            m.keepalive() - send charge current request (0x62) \n")
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description="M18 Battery Diagnostics",
-        epilog="Connect UART-TX to M18-J2, UART-RX to M18-J1, UART-GND to M18-GND")
-    parser.add_argument('--port', type=str, help="Serial port (e.g., COM5)")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="M18 Battery Diagnostics")
+    parser.add_argument("--port", type=str, help="Serial port (e.g., COM7)")
     args = parser.parse_args()
     m = M18(args.port)
-    m.help()
+    print("\nMenu:")
+    print("1. Health report (with CSV)")
+    print("2. Read all registers (CSV)")
+    print("3. Plot cell voltages")
+    print("4. Write message to 0x0023")
+    print("5. Submit form")
+    print("6. Export to dashboard")
+    print("7. Exit")
     while True:
-        print("\nMenu:")
-        print("1. Health report (with CSV)")
-        print("2. Read all registers (CSV)")
-        print("3. Plot cell voltages")
-        print("4. Write message to 0x0023")
-        print("5. Submit form")
-        print("6. Export to dashboard")
-        print("7. Exit")
-        choice = input("Choose an option (1-7): ")
+        choice = input("Choose an option (1-7): ").strip()
         if choice == '1':
-            m.health()
+            m.health(force_refresh=True, verbose=False)
         elif choice == '2':
-            m.read_id(output='csv')
+            csv_path = input("Enter CSV path (default: all_registers.csv): ") or 'all_registers.csv'
+            m.read_id(output="csv", csv_path=csv_path)
         elif choice == '3':
             m.plot_voltages()
         elif choice == '4':
             message = input("Enter message (max 20 chars): ")
             m.write_message(message)
         elif choice == '5':
-            m.submit_form()
+            array = m.read_id(output="form")
+            if array:
+                print("Form submitted with data:")
+                print(array)
+            else:
+                print("Failed to read data for form.")
         elif choice == '6':
             dashboard_url = input("Enter dashboard URL (default: http://172.25.47.113:5002/data): ") or 'http://172.25.47.113:5002/data'
             m.export_to_dashboard(dashboard_url)
         elif choice == '7':
+            print("Exiting...")
             break
         else:
-            print("Invalid choice")
-    print("Exiting...")
+            print("Invalid choice. Try again.")
+# Line 1004
